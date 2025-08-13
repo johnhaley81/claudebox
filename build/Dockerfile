@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean && \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
     apt-get update && \
-        apt-get install -y --no-autoremove --no-install-recommends ca-certificates curl locales gnupg && \
+        apt-get install -y --no-autoremove --no-install-recommends ca-certificates curl locales gnupg lsb-release && \
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen en_US.UTF-8 &&\
         mkdir -p /usr/share/keyrings && \
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /tmp/githubcli.gpg && \
@@ -22,12 +22,24 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         apt-get install -y --no-autoremove --no-install-recommends apt-utils wget zsh fzf ca-certificates sudo git tmux iptables ipset gh unzip jq \
         procps vim nano less iputils-ping traceroute dnsutils netcat-openbsd net-tools xdg-utils
 
+# Install Docker CLI for Docker-in-Docker support
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y --no-autoremove --no-install-recommends docker-ce-cli && \
+    groupadd -f docker
+
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
 RUN groupadd -g $GROUP_ID $USERNAME || true && \
-    useradd -m -u $USER_ID -g $GROUP_ID -s /bin/bash $USERNAME
+    useradd -m -u $USER_ID -g $GROUP_ID -s /bin/bash $USERNAME && \
+    # Add user to docker group for Docker socket access
+    usermod -aG docker $USERNAME
 
 RUN ARCH=$(dpkg --print-architecture) && \
     wget -q -O /tmp/git-delta_${DELTA_VERSION}_${ARCH}.deb \

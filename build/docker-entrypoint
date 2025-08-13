@@ -1,6 +1,28 @@
 #!/bin/bash
 set -euo pipefail
 
+# Fix Docker socket permissions if mounted
+if [[ -S /var/run/docker.sock ]]; then
+    # Get the GID of the docker socket
+    DOCKER_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null || echo "")
+    
+    if [[ -n "$DOCKER_GID" ]]; then
+        # Check if a group with this GID already exists
+        if ! getent group | grep -q ":${DOCKER_GID}:"; then
+            # No group with this GID exists, create one
+            groupadd -g "$DOCKER_GID" dockerhost 2>/dev/null || true
+        fi
+        
+        # Find the group name for this GID
+        GROUP_NAME=$(getent group | grep ":${DOCKER_GID}:" | cut -d: -f1)
+        
+        if [[ -n "$GROUP_NAME" ]]; then
+            # Add claude user to this group
+            usermod -aG "$GROUP_NAME" claude 2>/dev/null || true
+        fi
+    fi
+fi
+
 # Ensure PATH includes user's local bin directory
 # This will be substituted with actual username during build
 export PATH="/home/DOCKERUSER/.local/bin:$PATH"
