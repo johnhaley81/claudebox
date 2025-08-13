@@ -559,13 +559,14 @@ sync_commands_to_project() {
         
         # Copy preserving directory structure
         # Use find to handle subdirectories properly
-        cd "$cbox_source"
-        find . -type f | while read -r file; do
-            local dir=$(dirname "$file")
-            mkdir -p "$commands_dir/cbox/$dir"
-            cp "$file" "$commands_dir/cbox/$file"
-        done
-        cd - >/dev/null
+        if cd "$cbox_source"; then
+            find . -type f | while read -r file; do
+                local dir=$(dirname "$file")
+                mkdir -p "$commands_dir/cbox/$dir"
+                cp "$file" "$commands_dir/cbox/$file"
+            done
+            cd - >/dev/null || true
+        fi
         
         # Save checksum
         echo "$cbox_checksum" > "$cbox_checksum_file"
@@ -582,13 +583,14 @@ sync_commands_to_project() {
         mkdir -p "$commands_dir/user"
         
         # Copy preserving directory structure
-        cd "$user_source"
-        find . -type f | while read -r file; do
-            local dir=$(dirname "$file")
-            mkdir -p "$commands_dir/user/$dir"
-            cp "$file" "$commands_dir/user/$file"
-        done
-        cd - >/dev/null
+        if cd "$user_source"; then
+            find . -type f | while read -r file; do
+                local dir=$(dirname "$file")
+                mkdir -p "$commands_dir/user/$dir"
+                cp "$file" "$commands_dir/user/$file"
+            done
+            cd - >/dev/null || true
+        fi
         
         # Save checksum
         echo "$user_checksum" > "$user_checksum_file"
@@ -630,7 +632,7 @@ sync_commands_to_project() {
                     mkdir -p "$agents_dir/$dir"
                     cp "$file" "$agents_dir/$file"
                 done
-                cd - >/dev/null
+                cd - >/dev/null || true
             fi
             
             # Save checksum
