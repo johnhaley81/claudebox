@@ -45,6 +45,29 @@ _cmd_slot() {
         error "Usage: claudebox slot <number> [claude arguments...]"
     fi
     
+    # Filter out --docker-mode arguments that shouldn't be passed to Claude CLI
+    local container_args=()
+    local i=1
+    while [[ $i -le $# ]]; do
+        local arg="${!i}"
+        if [[ "$arg" == "--docker-mode" ]]; then
+            # Skip --docker-mode and its value if present
+            if [[ $((i + 1)) -le $# ]]; then
+                local next_arg_idx=$((i + 1))
+                local next_arg="${!next_arg_idx}"
+                if [[ "$next_arg" =~ ^(socket|none)$ ]]; then
+                    i=$((i + 1))  # Skip the mode value too
+                fi
+            fi
+        else
+            container_args+=("$arg")
+        fi
+        i=$((i + 1))
+    done
+    
+    # Update $@ with filtered arguments
+    set -- "${container_args[@]}"
+    
     # Get the slot directory
     local slot_dir=$(get_slot_dir "$PROJECT_DIR" "$slot_num")
     local slot_name=$(basename "$slot_dir")

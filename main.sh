@@ -89,6 +89,8 @@ main() {
     
     # Step 3: Process host flags (sets VERBOSE, REBUILD, CLAUDEBOX_WRAP_TMUX)
     process_host_flags
+    # Process control flags (sets DOCKER_MODE, etc.)
+    process_control_flags
     
     # Step 3a: Handle saved flags based on the first CLI argument
     local first_arg="${original_args[0]:-}"
@@ -111,6 +113,7 @@ main() {
                     # because the command was already identified from original args
                     parse_cli_args "${original_args[@]}" "${saved_flags[@]}"
                     process_host_flags
+                    process_control_flags
                     
                     if [[ "$VERBOSE" == "true" ]]; then
                         echo "[DEBUG] Loaded saved flags: ${saved_flags[*]}" >&2
@@ -461,6 +464,7 @@ main() {
                     # Re-parse to properly sort flags
                     parse_cli_args "${all_args[@]}"
                     process_host_flags
+                    process_control_flags
                     
                     if [[ "$VERBOSE" == "true" ]]; then
                         echo "[DEBUG] Re-parsed with saved flags" >&2
@@ -495,9 +499,13 @@ main() {
                 fi
                 local piped_input
                 piped_input=$(cat)
-                run_claudebox_container "$container_name" "interactive" "${CLI_CONTROL_FLAGS[@]}" "-p" "$piped_input" "${CLI_PASS_THROUGH[@]}"
+                local container_control_flags
+                container_control_flags=($(get_container_control_flags))
+                run_claudebox_container "$container_name" "interactive" "${container_control_flags[@]}" "-p" "$piped_input" "${CLI_PASS_THROUGH[@]}"
             else
-                run_claudebox_container "$container_name" "interactive" "${CLI_CONTROL_FLAGS[@]}" "${CLI_PASS_THROUGH[@]}"
+                local container_control_flags
+                container_control_flags=($(get_container_control_flags))
+                run_claudebox_container "$container_name" "interactive" "${container_control_flags[@]}" "${CLI_PASS_THROUGH[@]}"
             fi
         else
             show_no_slots_menu

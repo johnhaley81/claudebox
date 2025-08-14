@@ -242,6 +242,25 @@ run_claudebox_container() {
     # Mount SSH directory
     docker_args+=(-v "$HOME/.ssh":"/home/$DOCKER_USER/.ssh:ro")
     
+    # Docker-in-Docker support based on --docker-mode
+    case "${DOCKER_MODE:-socket}" in
+        "socket")
+            if [[ -S /var/run/docker.sock ]]; then
+                docker_args+=(-v /var/run/docker.sock:/var/run/docker.sock)
+                if [[ "$VERBOSE" == "true" ]]; then
+                    echo "[DEBUG] Docker socket mounted for Docker-in-Docker support" >&2
+                fi
+            elif [[ "$VERBOSE" == "true" ]]; then
+                echo "[DEBUG] Docker socket not available - DinD disabled" >&2
+            fi
+            ;;
+        "none")
+            if [[ "$VERBOSE" == "true" ]]; then
+                echo "[DEBUG] Docker-in-Docker disabled by --docker-mode none" >&2
+            fi
+            ;;
+    esac
+    
     # Mount .env file if it exists in the project directory
     if [[ -f "$PROJECT_DIR/.env" ]]; then
         docker_args+=(-v "$PROJECT_DIR/.env":/workspace/.env:ro)
@@ -400,6 +419,25 @@ run_claudebox_container() {
     if [[ ${#container_args[@]} -gt 0 ]]; then
         docker_args+=("${container_args[@]}")
     fi
+    
+    # Show security warnings for Docker socket access
+    case "${DOCKER_MODE:-socket}" in
+        "socket")
+            if [[ -S /var/run/docker.sock ]]; then
+                printf '%s\n' "🚨 SECURITY WARNING: Docker socket mounted - container has root-equivalent access to host!" >&2
+                printf '%s\n' "   This enables Docker-in-Docker but grants significant host privileges." >&2
+                printf '%s\n' "   Use --docker-mode none to disable Docker access." >&2
+                printf '%s\n' "   Press Ctrl+C within 3 seconds to cancel..." >&2
+                sleep 3
+            fi
+            ;;
+        "safe")
+            if [[ -S /var/run/docker.sock ]]; then
+                printf '%s\n' "⚠️  Docker socket mounted read-only - some Docker operations may fail." >&2
+                printf '%s\n' "   Note: Read-only still allows container creation with elevated privileges." >&2
+            fi
+            ;;
+    esac
     
     # Run the container
     if [[ "$VERBOSE" == "true" ]]; then
