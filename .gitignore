@@ -72,3 +72,6 @@ backlog/
 # Generated installer
 claudebox.run.sh
 claudebox.run
+
+# Serena cache directory
+.serena/cache/
