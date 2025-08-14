@@ -75,3 +75,6 @@ claudebox.run
 
 # Serena cache directory
 .serena/cache/
+
+# Local settings (contains API keys and personal config)
+settings.local.json
