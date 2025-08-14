@@ -1,17 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Set up Docker sidecar mode if enabled
-if [[ "${DOCKER_SIDECAR_MODE:-false}" == "true" ]]; then
-    # Create docker command that uses the wrapper
-    if [[ -x /usr/local/bin/docker-wrapper ]]; then
-        # Create symlink to override docker command
-        ln -sf /usr/local/bin/docker-wrapper /usr/local/bin/docker
-        # Ensure /usr/local/bin is first in PATH
-        export PATH="/usr/local/bin:$PATH"
-    fi
-fi
-
 # Fix Docker socket permissions if mounted
 if [[ -S /var/run/docker.sock ]]; then
     # Get the GID of the docker socket

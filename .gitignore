@@ -72,6 +72,3 @@ backlog/
 # Generated installer
 claudebox.run.sh
 claudebox.run
-
-# Serena MCP server files
-.serena/

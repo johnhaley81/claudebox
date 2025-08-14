@@ -425,30 +425,6 @@ main() {
         fi
     fi
     
-    # Step 13a: Start Docker sidecar if requested
-    if [[ "${DOCKER_MODE:-}" == "sidecar" ]]; then
-        if [[ "$VERBOSE" == "true" ]]; then
-            echo "[DEBUG] Docker mode is sidecar, starting sidecar container..." >&2
-        fi
-        
-        # Build sidecar image if needed
-        if ! docker image inspect "claudebox-sidecar:latest" >/dev/null 2>&1; then
-            if [[ "$VERBOSE" == "true" ]]; then
-                echo "[DEBUG] Building Docker sidecar image..." >&2
-            fi
-            if ! build_sidecar_image; then
-                error "Failed to build Docker sidecar image"
-            fi
-        fi
-        
-        # Start the sidecar
-        if ! start_docker_sidecar; then
-            error "Failed to start Docker sidecar container"
-        fi
-        
-        info "Docker sidecar started successfully"
-    fi
-    
     # Step 14: Single dispatch point
     if [[ -n "${CLI_SCRIPT_COMMAND}" ]]; then
         # Script command - dispatch on host
