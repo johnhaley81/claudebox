@@ -1,0 +1,53 @@
+# Docker Sidecar Container
+# Provides secure Docker proxy with filtering and audit logging
+FROM alpine:3.18
+
+# Install required packages
+RUN apk add --no-cache \
+    bash \
+    docker-cli \
+    jq \
+    curl \
+    netcat-openbsd \
+    findutils \
+    gawk \
+    coreutils
+
+# Create sidecar user and group
+RUN addgroup -g 1000 sidecar && \
+    adduser -D -s /bin/bash -u 1000 -G sidecar sidecar
+
+# Create application directory
+WORKDIR /app
+
+# Copy sidecar scripts
+COPY lib/docker-sidecar/docker-sidecar-api.sh /app/
+COPY lib/docker-sidecar/docker-sidecar-filter.sh /app/
+COPY lib/docker-sidecar/docker-sidecar-logger.sh /app/
+
+# Make scripts executable
+RUN chmod +x /app/*.sh
+
+# Create log directory
+RUN mkdir -p /var/log/sidecar && \
+    chown sidecar:sidecar /var/log/sidecar
+
+# Create socket directory
+RUN mkdir -p /var/run && \
+    chown sidecar:sidecar /var/run
+
+# Switch to sidecar user
+USER sidecar
+
+# Set environment variables
+ENV API_SOCKET=/var/run/api.sock
+ENV DOCKER_SOCKET=/var/run/docker.sock
+ENV SIDECAR_LOG_DIR=/var/log/sidecar
+ENV SIDECAR_SECURITY_LEVEL=moderate
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD test -S "$API_SOCKET" || exit 1
+
+# Start the sidecar API server
+ENTRYPOINT ["/app/docker-sidecar-api.sh"]

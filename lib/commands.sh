@@ -142,7 +142,7 @@ show_help() {
         echo "  --verbose                        Show detailed output"
         echo "  --enable-sudo                    Enable sudo without password"
         echo "  --disable-firewall               Disable network restrictions"
-        echo "  --docker-mode <mode>             Docker access: socket(default)|none"
+        echo "  --docker-mode <mode>             Docker access: socket(default)|sidecar|none"
         echo
         echo "ClaudeBox Commands:"
         echo "$our_commands"
@@ -171,7 +171,7 @@ show_help() {
         echo "  --verbose                        Show detailed output"
         echo "  --enable-sudo                    Enable sudo without password"
         echo "  --disable-firewall               Disable network restrictions"
-        echo "  --docker-mode <mode>             Docker access: socket(default)|none"
+        echo "  --docker-mode <mode>             Docker access: socket(default)|sidecar|none"
         echo
         echo "Commands:"
         echo "$our_commands"
@@ -215,7 +215,7 @@ show_full_help() {
   --verbose                        Show detailed output\
   --enable-sudo                    Enable sudo without password\
   --disable-firewall               Disable network restrictions\
-  --docker-mode <mode>             Docker access: socket(default)|none\
+  --docker-mode <mode>             Docker access: socket(default)|sidecar|none\
 ' | \
             sed '$ a\
   profiles                        List all available profiles\

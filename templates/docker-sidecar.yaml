@@ -1,0 +1,208 @@
+# ClaudeBox Docker Sidecar Configuration
+# This file controls the security and behavior of the Docker sidecar proxy
+# Copy this file to ~/.claudebox/docker-sidecar.yaml to customize your settings
+
+sidecar:
+  # Enable or disable the sidecar completely
+  enabled: true
+  
+  # Security level: strict, moderate, permissive
+  # - strict: Only read operations allowed
+  # - moderate: Common development operations (default)
+  # - permissive: Most Docker operations allowed
+  security_level: moderate
+
+policies:
+  # Security restrictions
+  allow_privileged: false
+  allow_host_mounts: false
+  allow_unsafe_capabilities: false
+  
+  # Resource limits per container
+  max_containers: 10
+  max_memory: "2g"
+  max_cpus: "2"
+  max_storage: "10g"
+  
+  # Rate limiting
+  rate_limit_per_minute: 60
+  burst_size: 10
+  
+  # Image allowlist (glob patterns supported)
+  allowed_images:
+    - "ubuntu:*"
+    - "alpine:*"
+    - "debian:*"
+    - "node:*"
+    - "python:*"
+    - "golang:*"
+    - "rust:*"
+    - "openjdk:*"
+    - "nginx:*"
+    - "postgres:*"
+    - "mysql:*"
+    - "redis:*"
+    # Add custom images here
+    # - "myregistry.com/myapp:*"
+    
+  # Blocked images (glob patterns supported)
+  blocked_images:
+    - "*:latest"  # Force specific tags for reproducibility
+    - "scratch"   # Minimal images often lack security tools
+    # Add images to block here
+    
+  # Registry restrictions
+  allowed_registries:
+    - "docker.io"
+    - "registry.hub.docker.com"
+    - "gcr.io"
+    - "quay.io"
+    # Add trusted registries here
+    
+  # Operations allowed by security level
+  operations:
+    strict:
+      - "docker_ps"
+      - "docker_images"
+      - "docker_logs"
+      - "docker_inspect"
+      - "docker_version"
+      - "docker_info"
+    moderate:
+      - "docker_ps"
+      - "docker_images"
+      - "docker_logs"
+      - "docker_inspect"
+      - "docker_version"
+      - "docker_info"
+      - "docker_run_restricted"
+      - "docker_exec_readonly"
+      - "docker_build"
+      - "docker_pull"
+      - "docker_create"
+      - "docker_start"
+      - "docker_stop"
+    permissive:
+      - "docker_ps"
+      - "docker_images"
+      - "docker_logs"
+      - "docker_inspect"
+      - "docker_version"
+      - "docker_info"
+      - "docker_run"
+      - "docker_exec"
+      - "docker_build"
+      - "docker_pull"
+      - "docker_push"
+      - "docker_create"
+      - "docker_start"
+      - "docker_stop"
+      - "docker_restart"
+      - "docker_rm"
+      - "docker_rmi"
+      - "docker_commit"
+      - "docker_export"
+      - "docker_import"
+      - "docker_save"
+      - "docker_load"
+
+# Dangerous flags that are always blocked regardless of security level
+dangerous_flags:
+  - "--privileged"
+  - "--cap-add=SYS_ADMIN"
+  - "--cap-add=NET_ADMIN"
+  - "--cap-add=SYS_PTRACE"
+  - "--cap-add=SYS_MODULE"
+  - "--cap-add=DAC_OVERRIDE"
+  - "--net=host"
+  - "--network=host"
+  - "--pid=host"
+  - "--ipc=host"
+  - "--userns=host"
+  - "--security-opt=apparmor:unconfined"
+  - "--security-opt=seccomp:unconfined"
+  - "--device=/dev/fuse"
+  # Add custom dangerous flags here
+
+# Dangerous volume mounts that are always blocked
+dangerous_paths:
+  - "/:/host"
+  - "/etc:/host-etc"
+  - "/var/run/docker.sock"
+  - "/proc:/host-proc"
+  - "/sys:/host-sys"
+  - "/dev:/host-dev"
+  - "/boot:/host-boot"
+  - "/lib/modules"
+  - "/usr/src"
+  - "/var/lib/docker"
+  # Add custom dangerous paths here
+
+logging:
+  # Enable audit logging
+  enabled: true
+  
+  # Log file location (relative to ~/.claudebox/)
+  path: "docker-audit.log"
+  
+  # Log retention in days (0 = keep forever)
+  retention_days: 30
+  
+  # Maximum log file size in MB before rotation
+  max_size_mb: 10
+  
+  # Include request/response bodies in logs (may be verbose)
+  include_bodies: false
+  
+  # Log levels: ERROR, WARN, INFO, DEBUG
+  level: INFO
+
+monitoring:
+  # Health check interval in seconds
+  health_check_interval: 30
+  
+  # Restart sidecar automatically on failure
+  restart_on_failure: true
+  
+  # Maximum restart attempts before giving up
+  max_restart_attempts: 3
+  
+  # Timeout for Docker operations in seconds
+  operation_timeout: 300
+  
+  # Enable performance metrics collection
+  collect_metrics: true
+
+# Network restrictions
+network:
+  # Allow outbound network access from containers
+  allow_outbound: true
+  
+  # Allowed outbound ports (empty = all ports allowed)
+  allowed_outbound_ports: []
+  # Example: [80, 443, 22, 3000]
+  
+  # Blocked outbound hosts/IPs
+  blocked_hosts: 
+    - "169.254.169.254"  # Block metadata service
+    - "metadata.google.internal"
+    # Add hosts to block here
+    
+  # DNS restrictions
+  allowed_dns_servers:
+    - "8.8.8.8"
+    - "8.8.4.4"
+    - "1.1.1.1"
+    - "1.0.0.1"
+    # Add trusted DNS servers here
+
+# Custom security rules (advanced users only)
+custom_rules:
+  # Enable custom Lua scripts for advanced filtering
+  enabled: false
+  
+  # Path to custom rule scripts
+  script_path: "~/.claudebox/custom-rules"
+  
+  # Timeout for custom rule execution
+  execution_timeout: 5

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Docker Wrapper Script for ClaudeBox Sidecar Mode
+# Routes Docker commands through sidecar proxy when enabled
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+# Check if sidecar mode is enabled
+if [[ "${DOCKER_SIDECAR_MODE:-false}" == "true" ]]; then
+    # Source the sidecar client library
+    SCRIPT_DIR="/usr/local/lib/claudebox"
+    if [[ -f "$SCRIPT_DIR/docker-sidecar-client.sh" ]]; then
+        source "$SCRIPT_DIR/docker-sidecar-client.sh"
+        
+        # Use sidecar for Docker commands
+        docker_sidecar_command "$@"
+        exit $?
+    else
+        printf "ERROR: Sidecar client library not found at %s\n" "$SCRIPT_DIR/docker-sidecar-client.sh" >&2
+        exit 1
+    fi
+else
+    # Use real Docker binary
+    exec /usr/bin/docker "$@"
+fi

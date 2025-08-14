@@ -45,7 +45,7 @@ parse_cli_args() {
             if [[ $((i + 1)) -lt ${#all_args[@]} ]]; then
                 local next_arg="${all_args[$((i + 1))]}"
                 # Check if next arg is a valid docker mode and not another flag
-                if [[ "$next_arg" =~ ^(socket|none)$ ]]; then
+                if [[ "$next_arg" =~ ^(socket|sidecar|none)$ ]]; then
                     control_flags+=("$next_arg")
                     i=$((i + 1))  # Skip the next argument since we consumed it
                 else
